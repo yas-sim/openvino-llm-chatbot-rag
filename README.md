@@ -8,23 +8,26 @@ The program can answer your questions by referring the OpenVINO technical docume
 
 |#|Program/File|Description|
 |---|---|---|
-|1|llm-model-downloader.py|Download databrics/dolly-2 and meta-llama/llama2-7b-chat models, and convert them into OpenVINO IR models.|
-|2|openvino-doc-specific-extractor.py|Convert OpenVINO HTML documents into vector store (DB).<br>Reads HTML documents, extracts text, generates embeddings, and store it into vector store.|
-|3|openvino-rag-server.py|OpenVINO Q&A demo server|
-|4|openvino-rag-client.py|OpenVION Q&A demo client|
-|5|.env|Configurations (no secrets nor credentials ncluded. just a configuration file)|
-|6|requirements.txt|Python module requirements file|
+|1|`llm-model-downloader.py`|Download databrics/dolly-2 and meta-llama/llama2-7b-chat models, and convert them into OpenVINO IR models.|
+|2|`openvino-doc-specific-extractor.py`|Convert OpenVINO HTML documents into vector store (DB).<br>Reads HTML documents, extracts text, generates embeddings, and store it into vector store.|
+|3|`openvino-rag-server.py`|OpenVINO Q&A demo server|
+|4|`openvino-rag-client.py`|OpenVION Q&A demo client|
+|5|`.env`|Configurations (no secrets nor credentials ncluded. just a configuration file)|
+|6|`requirements.txt`|Python module requirements file|
+|7|`huggingface_login.py`|(optional) A Python script to login to HuggingFace hub.|
 
 ## How to run
 
 0. Install Python prerequisites
-(Win)
+
+Install steps for Windows.
 ```sh
 python -m venv venv
 venv/Scripts/activate
 python -m pip install -U pip
 pip install -U setuptools wheel
 pip install -r requirements.txt
+
 # Install en_core_web_sm, a Spacy pipeline for English
 python -m spacy download en_core_web_sm
 ```
@@ -52,8 +55,9 @@ python llm-model-downloader.py
 
 4. Run the demo
 - Run the server
+- Note: The '`--host 0.0.0.0`' option is to accept external connection. '`--port xx`' option is also available.
 ```sh
-uvicorn openvino-rag-server:app
+uvicorn openvino-rag-server:app --host 0.0.0.0
 ```
 - Run the client
 ```sh
