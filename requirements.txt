@@ -21,4 +21,4 @@ requests
 beautifulsoup4
 fastapi
 streamlit
-uvicorn==0.15.0
+uvicorn
