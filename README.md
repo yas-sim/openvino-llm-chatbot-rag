@@ -13,8 +13,19 @@ The program can answer your questions by referring the OpenVINO technical docume
 |3|openvino-rag-server.py|OpenVINO Q&A demo server|
 |4|openvino-rag-client.py|OpenVION Q&A demo client|
 |5|.env|Configurations (no secrets nor credentials ncluded. just a configuration file)|
+|6|requirements.txt|Python module requirements file|
 
 ## How to run
+
+0. Install Python prerequisites
+(Win)
+```sh
+python -m venv venv
+venv/Scripts/activate
+python -m pip install -U pip
+pip install -U setuptools wheel
+pip install -r requirements.txt
+```
 
 1. Downloading OpenVINO Documents
 - Go to [OpenVINO web document page](https://docs.openvino.ai/2023.2/get_started.html) and download the archived document file from 'Download Docs' link on the right.
