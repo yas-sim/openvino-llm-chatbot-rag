@@ -1,9 +1,15 @@
-#test-rag-client.py
+# openvino-rag-client.py
 # 
-
+import os
+from dotenv import load_dotenv
 import json
 import requests
+
 import streamlit as st
+
+load_dotenv(verbose=True)
+server_url  = os.environ['SERVER_URL']
+server_port = os.environ['SERVER_PORT']
 
 st.title('OpenVINO Q&A Chatbot')
 
@@ -23,12 +29,10 @@ if prompt:
 
     with st.chat_message('assistant'):
         payload = {"query":prompt}
-        ans = requests.get('http://127.0.0.1:8000/chatbot/1', params=payload)
+        ans = requests.get(f'http://{server_url}:{server_port}/chatbot/1', params=payload)
         ans = json.loads(ans.text)
         st.markdown(ans['response'])
         st.session_state.messages.append({'role':'assistant', 'content':ans['response']})
 
-# http://127.0.0.1:8000/docs
-
-# streamlit run test-rag-client.py
-
+# How to run (You need to have streamlit -> pip install streamlit)
+# streamlit run openvino-rag-client.py

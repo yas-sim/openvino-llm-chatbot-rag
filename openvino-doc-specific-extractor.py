@@ -88,12 +88,12 @@ def generate_vectorstore_from_documents(
 
     for doc in tqdm(splitted_docs):
         vectorstore.add_documents([doc])
-        #print(doc)
-        #print('*'*80)
 
-pickle_file = './doc_obj.pickle'
+
+
 
 # Generate documents from HTML. Read the documents from pickle file if exists.
+pickle_file = './doc_obj.pickle'
 if not os.path.exists(pickle_file):
     print('*** Reading HTML and generating document(s)')
     docs = generate_documents_from_html(f'{document_dir}/**/*.html')
@@ -106,6 +106,6 @@ else:
 
 print('*** Converting documents into embeddings and creating a vector store(s)')
 generate_vectorstore_from_documents(docs, vectorstore_dir,  300,   0, False, embeddings_model)
-generate_vectorstore_from_documents(docs, vectorstore_dir,  500,   0, False, embeddings_model)
-generate_vectorstore_from_documents(docs, vectorstore_dir,  500, 100, False, embeddings_model)
-generate_vectorstore_from_documents(docs, vectorstore_dir, 1000, 100, False, embeddings_model)
+#generate_vectorstore_from_documents(docs, vectorstore_dir,  500,   0, False, embeddings_model)
+#generate_vectorstore_from_documents(docs, vectorstore_dir,  500, 100, False, embeddings_model)
+#generate_vectorstore_from_documents(docs, vectorstore_dir, 1000, 100, False, embeddings_model)

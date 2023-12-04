@@ -1,15 +1,15 @@
 #llm-model-downloader.py
+import shutil
+import logging
 import os
+import gc
+from pathlib import Path
 
 from huggingface_hub import login, whoami
 from optimum.intel import OVQuantizer
 from optimum.intel.openvino import OVModelForCausalLM
 import openvino as ov
-from pathlib import Path
-import shutil
-import logging
 import nncf
-import gc
 
 nncf.set_log_level(logging.ERROR)
 
@@ -48,16 +48,16 @@ def prepare_model(model_vendor, model_id, group_size:int, ratio:float, generate_
         ov_model = OVModelForCausalLM.from_pretrained(fp16_model_dir, compile=False, cache_dir=cache_dir, ov_config={'CACHE_DIR':'./ov_cache'})
         int4_model_dir.mkdir(parents=True, exist_ok=True)
         ov_model = ov.Core().read_model(fp16_model_dir / ov_model_file_name)
-        shutil.copy(fp16_model_dir / 'config.json', int8_model_dir / 'config.json')
+        shutil.copy(fp16_model_dir / 'config.json', int4_model_dir / 'config.json')
         compressed_model = nncf.compress_weights(ov_model, mode=nncf.CompressWeightsMode.INT4_ASYM, ratio=ratio, group_size=group_size)
         ov.save_model(compressed_model, int4_model_dir / ov_model_file_name)
         del ov_model
         del compressed_model
         gc.collect()
 
-# model_vendor, model_id, group_size, ratio
 
-logging.info('*** LLM model downloader')
+
+print('*** LLM model downloader')
 
 prepare_model('databricks', 'dolly-v2-3b', 128, 0.8)
 

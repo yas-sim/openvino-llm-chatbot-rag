@@ -1,16 +1,13 @@
-#test-rag.py
-#pip install langchainhub fastapi==0.70.0 uvicorn==0.15.0
+# openvino-rag-server.py
 
 import os
 from dotenv import load_dotenv
-import json
 
+from fastapi import FastAPI
 
 from langchain.llms import HuggingFacePipeline
 from langchain.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.schema.runnable import RunnablePassthrough
-from langchain.schema import StrOutputParser
 from langchain.chains import RetrievalQA
 
 from transformers import AutoTokenizer, pipeline
@@ -21,15 +18,16 @@ from optimum.intel.openvino import OVModelForCausalLM
 
 
 load_dotenv(verbose=True)
-model_vendor     = os.environ['MODEL_VENDOR']
-model_name       = os.environ['MODEL_NAME']
-model_precision  = os.environ['MODEL_PRECISION']
-inference_device = os.environ['INFERENCE_DEVICE']
-document_dir     = os.environ['DOCUMENT_DIR']
-vectorstore_dir  = os.environ['VECTOR_DB_DIR']
-num_max_tokens   = int(os.environ['NUM_MAX_TOKENS'])
-embeddings_model = os.environ['MODEL_EMBEDDINGS']
-ov_config        = {"PERFORMANCE_HINT":"LATENCY", "NUM_STREAMS":"1", "CACHE_DIR":"./cache"}
+model_vendor      = os.environ['MODEL_VENDOR']
+model_name        = os.environ['MODEL_NAME']
+model_precision   = os.environ['MODEL_PRECISION']
+inference_device  = os.environ['INFERENCE_DEVICE']
+document_dir      = os.environ['DOCUMENT_DIR']
+vectorstore_dir   = os.environ['VECTOR_DB_DIR']
+vector_db_postfix = os.environ['VECTOR_DB_POSTFIX']
+num_max_tokens    = int(os.environ['NUM_MAX_TOKENS'])
+embeddings_model  = os.environ['MODEL_EMBEDDINGS']
+ov_config         = {"PERFORMANCE_HINT":"LATENCY", "NUM_STREAMS":"1", "CACHE_DIR":"./cache"}
 
 ### WORKAROUND for "trust_remote_code=True is required error" in HuggingFaceEmbeddings()
 from transformers import AutoModel
@@ -82,14 +80,6 @@ def run_generation(text_user_en):
     #translation_jp = translator.translate(ans, src='en', dest='ja')
     return ans
 
-def reset_textbox():
-    print('Clear')
-    return '', ''
-
-#------------------------------------------------------
-
-from fastapi import FastAPI
-
 app = FastAPI()
 
 @app.get('/chatbot/{item_id}')
@@ -99,4 +89,9 @@ async def root(item_id:int, query:str=None):
         return {"response":ans}
     return {"response":""}
 
-# uvicorn test-rag-server:app
+
+# API reference
+# http://127.0.0.1:8000/docs
+
+# How to run (You need to have uvicorn and streamlit -> pip install uvicorn streamlit)
+# uvicorn openvino-rag-server:app
