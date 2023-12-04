@@ -60,6 +60,7 @@ python llm-model-downloader.py
 uvicorn openvino-rag-server:app --host 0.0.0.0
 ```
 - Run the client
+- Note: You can change the server URL (or IP address) and port number by editing `.env` file.
 ```sh
 streamlit run openvino-rag-client.py
 ``` 

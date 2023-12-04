@@ -1,6 +1,7 @@
 # openvino-rag-server.py
 
 import os
+import time
 from dotenv import load_dotenv
 
 from fastapi import FastAPI
@@ -85,9 +86,14 @@ app = FastAPI()
 @app.get('/chatbot/{item_id}')
 async def root(item_id:int, query:str=None):
     if query:
+        stime = time.time()
         ans = run_generation(query)
-        return {"response":ans}
-    return {"response":""}
+        etime = time.time()
+        wc = len(ans.split())            # simple word count
+        process_time = etime - stime
+        words_per_sec = wc / process_time
+        return {'response':f'{ans} \r\n\r\nWord count: {wc}, Processing Time: {process_time:6.1f} sec, {words_per_sec:6.2} words/sec'}
+    return {'response':''}
 
 
 # API reference
