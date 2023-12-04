@@ -1,11 +1,10 @@
 #test-rag.py
-#pip install langchainhub gradio
+#pip install langchainhub fastapi==0.70.0 uvicorn==0.15.0
 
 import os
 from dotenv import load_dotenv
 import json
 
-import gradio as gr
 
 from langchain.llms import HuggingFacePipeline
 from langchain.vectorstores import Chroma
@@ -87,29 +86,17 @@ def reset_textbox():
     print('Clear')
     return '', ''
 
+#------------------------------------------------------
 
-with gr.Blocks() as demo:
-    gr.Markdown('<h1><center>OpenVINO Q&A Chatbot</center></h1>')
-    with gr.Row():
-        with gr.Column(scale=2):
-            #text_user_jp = gr.Textbox(label='Question(JP)', placeholder='Type in your question here.')
-            text_user_en = gr.Textbox(label='Question(EN)', placeholder='')
-    with gr.Row():
-        with gr.Column(scale=2):
-            #text_answer_jp = gr.Textbox(label='Answer(JP)', placeholder='Response from Q&A system', interactive=False)
-            text_answer_en = gr.Textbox(label='Answer(EN)', placeholder='', interactive=False)
-    with gr.Row():
-        button_submit = gr.Button(value='Submit',)
-        button_clear  = gr.Button(value='Clear')
-    examples = [
-        ['What is NNCF?'],
-        ['Explain OpenVINO briefly.'],
-    ]
-    gr.Examples(examples=examples, inputs=text_user_en)
+from fastapi import FastAPI
 
-    text_user_en.submit(fn=run_generation, inputs=[text_user_en], outputs=[text_answer_en])
-    button_submit.click(fn=run_generation, inputs=[text_user_en], outputs=[text_answer_en])
-    button_clear.click(fn=reset_textbox, outputs=[text_user_en, text_answer_en])
+app = FastAPI()
 
-demo.queue()
-demo.launch(share=True, inbrowser=True)
+@app.get('/chatbot/{item_id}')
+async def root(item_id:int, query:str=None):
+    if query:
+        ans = run_generation(query)
+        return {"response":ans}
+    return {"response":""}
+
+# uvicorn test-rag-server:app

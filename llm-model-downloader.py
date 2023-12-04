@@ -1,0 +1,72 @@
+#llm-model-downloader.py
+import os
+
+from huggingface_hub import login, whoami
+from optimum.intel import OVQuantizer
+from optimum.intel.openvino import OVModelForCausalLM
+import openvino as ov
+from pathlib import Path
+import shutil
+import logging
+import nncf
+import gc
+
+nncf.set_log_level(logging.ERROR)
+
+def prepare_model(model_vendor, model_id, group_size:int, ratio:float, generate_fp16:bool=True, generate_int8:bool=True, generate_int4:bool=True, cache_dir='./cache'):
+    pt_model_id = f'{model_vendor}/{model_id}'
+    fp16_model_dir = Path(model_id) / "FP16"
+    int8_model_dir = Path(model_id) / "INT8"
+    int4_model_dir = Path(model_id) / "INT4"
+
+    ov_model_file_name = 'openvino_model.xml'
+
+    print(f'** Prepaing model : {model_vendor}/{model_id}')
+
+    # FP16
+    if generate_fp16 and not os.path.exists(fp16_model_dir / ov_model_file_name):
+        print('\n** Generating an FP16 IR model')
+        ov_model = OVModelForCausalLM.from_pretrained(pt_model_id, export=True, compile=False, cache_dir=cache_dir, ov_config={'CACHE_DIR':'./ov_cache'})
+        ov_model.half()
+        ov_model.save_pretrained(fp16_model_dir)
+        del ov_model
+        gc.collect()
+
+    # INT8
+    if generate_int8 and not os.path.exists(int8_model_dir / ov_model_file_name):
+        print('\n** Generating an INT8 IR model')
+        ov_model = OVModelForCausalLM.from_pretrained(fp16_model_dir, compile=False, cache_dir=cache_dir, ov_config={'CACHE_DIR':'./ov_cache'})
+        quantizer = OVQuantizer.from_pretrained(ov_model, cache_dir=cache_dir)
+        quantizer.quantize(save_directory=int8_model_dir, weights_only=True)
+        del quantizer
+        del ov_model
+        gc.collect()
+
+    # INT4
+    if generate_int4 and not os.path.exists(int4_model_dir / ov_model_file_name):
+        print('\n** Generating an INT4_ASYM IR model')
+        ov_model = OVModelForCausalLM.from_pretrained(fp16_model_dir, compile=False, cache_dir=cache_dir, ov_config={'CACHE_DIR':'./ov_cache'})
+        int4_model_dir.mkdir(parents=True, exist_ok=True)
+        ov_model = ov.Core().read_model(fp16_model_dir / ov_model_file_name)
+        shutil.copy(fp16_model_dir / 'config.json', int8_model_dir / 'config.json')
+        compressed_model = nncf.compress_weights(ov_model, mode=nncf.CompressWeightsMode.INT4_ASYM, ratio=ratio, group_size=group_size)
+        ov.save_model(compressed_model, int4_model_dir / ov_model_file_name)
+        del ov_model
+        del compressed_model
+        gc.collect()
+
+# model_vendor, model_id, group_size, ratio
+
+logging.info('*** LLM model downloader')
+
+prepare_model('databricks', 'dolly-v2-3b', 128, 0.8)
+
+try:
+    whoami()
+    print('Authorization token already provided')
+except OSError:
+    print('The llama2 model is a controlled model.')
+    print('You need to login to HuggingFace hub to download the model.')
+    login()
+finally:
+    prepare_model('meta-llama', 'Llama-2-7b-chat-hf', 128, 0.8)
