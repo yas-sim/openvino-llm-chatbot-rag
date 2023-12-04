@@ -19,6 +19,7 @@ from optimum.intel.openvino import OVModelForCausalLM
 
 
 load_dotenv(verbose=True)
+cache_dir         = os.environ['CACHE_DIR']
 model_vendor      = os.environ['MODEL_VENDOR']
 model_name        = os.environ['MODEL_NAME']
 model_precision   = os.environ['MODEL_PRECISION']
@@ -28,7 +29,8 @@ vectorstore_dir   = os.environ['VECTOR_DB_DIR']
 vector_db_postfix = os.environ['VECTOR_DB_POSTFIX']
 num_max_tokens    = int(os.environ['NUM_MAX_TOKENS'])
 embeddings_model  = os.environ['MODEL_EMBEDDINGS']
-ov_config         = {"PERFORMANCE_HINT":"LATENCY", "NUM_STREAMS":"1", "CACHE_DIR":"./cache"}
+rag_chain_type    = os.environ['RAG_CHAIN_TYPE']
+ov_config         = {"PERFORMANCE_HINT":"LATENCY", "NUM_STREAMS":"1", "CACHE_DIR":cache_dir}
 
 ### WORKAROUND for "trust_remote_code=True is required error" in HuggingFaceEmbeddings()
 from transformers import AutoModel
@@ -52,24 +54,12 @@ retriever = vectorstore.as_retriever()
 print(f'** Vector store : {vectorstore_dir}')
 
 model_id = f'{model_vendor}/{model_name}'
-tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir='./cache')
-
+tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
 ov_model_path = f'./{model_name}/{model_precision}'
-model = OVModelForCausalLM.from_pretrained(
-    model_id  = ov_model_path,
-    device    = inference_device,
-    ov_config = ov_config,
-    cache_dir = './cache'
-)
-
-pipe = pipeline(
-    "text-generation", model=model, tokenizer=tokenizer, max_new_tokens=num_max_tokens
-)
-
+model = OVModelForCausalLM.from_pretrained(model_id=ov_model_path, device=inference_device, ov_config=ov_config, cache_dir=cache_dir)
+pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=num_max_tokens)
 llm = HuggingFacePipeline(pipeline=pipe)
-
-chain_type =  ['stuff', 'map_reduce', 'map_rerank', 'refine'][0]
-qa_chain = RetrievalQA.from_chain_type(llm=llm, chain_type=chain_type, retriever=retriever)
+qa_chain = RetrievalQA.from_chain_type(llm=llm, chain_type=rag_chain_type, retriever=retriever)
 
 # -------------------------
 

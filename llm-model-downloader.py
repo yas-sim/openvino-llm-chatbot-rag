@@ -4,6 +4,7 @@ import logging
 import os
 import gc
 from pathlib import Path
+from dotenv import load_dotenv
 
 from huggingface_hub import login, whoami
 from optimum.intel import OVQuantizer
@@ -12,6 +13,9 @@ import openvino as ov
 import nncf
 
 nncf.set_log_level(logging.ERROR)
+
+load_dotenv(verbose=True)
+cache_dir = os.environ['CACHE_DIR']
 
 def prepare_model(model_vendor, model_id, group_size:int, ratio:float, generate_fp16:bool=True, generate_int8:bool=True, generate_int4:bool=True, cache_dir='./cache'):
     pt_model_id = f'{model_vendor}/{model_id}'
@@ -26,26 +30,30 @@ def prepare_model(model_vendor, model_id, group_size:int, ratio:float, generate_
     # FP16
     if generate_fp16 and not os.path.exists(fp16_model_dir / ov_model_file_name):
         print('\n** Generating an FP16 IR model')
-        ov_model = OVModelForCausalLM.from_pretrained(pt_model_id, export=True, compile=False, cache_dir=cache_dir, ov_config={'CACHE_DIR':'./ov_cache'})
+        ov_model = OVModelForCausalLM.from_pretrained(pt_model_id, export=True, compile=False, cache_dir=cache_dir, ov_config={'CACHE_DIR':cache_dir})
         ov_model.half()
         ov_model.save_pretrained(fp16_model_dir)
         del ov_model
         gc.collect()
+    else:
+        print('\n** Skip generation of FP16 IR model (directory already exists)')
 
     # INT8
     if generate_int8 and not os.path.exists(int8_model_dir / ov_model_file_name):
         print('\n** Generating an INT8 IR model')
-        ov_model = OVModelForCausalLM.from_pretrained(fp16_model_dir, compile=False, cache_dir=cache_dir, ov_config={'CACHE_DIR':'./ov_cache'})
+        ov_model = OVModelForCausalLM.from_pretrained(fp16_model_dir, compile=False, cache_dir=cache_dir, ov_config={'CACHE_DIR':cache_dir})
         quantizer = OVQuantizer.from_pretrained(ov_model, cache_dir=cache_dir)
         quantizer.quantize(save_directory=int8_model_dir, weights_only=True)
         del quantizer
         del ov_model
         gc.collect()
+    else:
+        print('\n** Skip generation of INT8 IR model (directory already exists)')
 
     # INT4
     if generate_int4 and not os.path.exists(int4_model_dir / ov_model_file_name):
         print('\n** Generating an INT4_ASYM IR model')
-        ov_model = OVModelForCausalLM.from_pretrained(fp16_model_dir, compile=False, cache_dir=cache_dir, ov_config={'CACHE_DIR':'./ov_cache'})
+        ov_model = OVModelForCausalLM.from_pretrained(fp16_model_dir, compile=False, cache_dir=cache_dir, ov_config={'CACHE_DIR':cache_dir})
         int4_model_dir.mkdir(parents=True, exist_ok=True)
         ov_model = ov.Core().read_model(fp16_model_dir / ov_model_file_name)
         shutil.copy(fp16_model_dir / 'config.json', int4_model_dir / 'config.json')
@@ -54,6 +62,8 @@ def prepare_model(model_vendor, model_id, group_size:int, ratio:float, generate_
         del ov_model
         del compressed_model
         gc.collect()
+    else:
+        print('\n** Skip generation of INT4 IR model (directory already exists)')
 
 
 
