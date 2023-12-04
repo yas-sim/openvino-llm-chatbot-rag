@@ -58,6 +58,9 @@ uvicorn openvino-rag-server:app
 streamlit run openvino-rag-client.py
 ``` 
 
+## Examples
+![pic1](./resources/screenshot1.png)
+
 ## Tested environment
 - OS: Windows 11
 - OpenVINO: OpenVINO 2023.2.0
