@@ -25,6 +25,8 @@ venv/Scripts/activate
 python -m pip install -U pip
 pip install -U setuptools wheel
 pip install -r requirements.txt
+# Install en_core_web_sm, a Spacy pipeline for English
+python -m spacy download en_core_web_sm
 ```
 
 1. Downloading OpenVINO Documents
