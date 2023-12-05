@@ -105,7 +105,7 @@ else:
         docs = pickle.load(file=f)
 
 print('*** Converting documents into embeddings and creating a vector store(s)')
-generate_vectorstore_from_documents(docs, vectorstore_dir,  300,   0, False, embeddings_model)
-#generate_vectorstore_from_documents(docs, vectorstore_dir,  500,   0, False, embeddings_model)
-#generate_vectorstore_from_documents(docs, vectorstore_dir,  500, 100, False, embeddings_model)
-#generate_vectorstore_from_documents(docs, vectorstore_dir, 1000, 100, False, embeddings_model)
+generate_vectorstore_from_documents(docs, vectorstore_dir,  300,   0, True, embeddings_model)
+generate_vectorstore_from_documents(docs, vectorstore_dir,  500,   0, True, embeddings_model)
+generate_vectorstore_from_documents(docs, vectorstore_dir,  500, 100, True, embeddings_model)
+generate_vectorstore_from_documents(docs, vectorstore_dir, 1000, 100, True, embeddings_model)

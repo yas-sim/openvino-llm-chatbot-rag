@@ -4,6 +4,8 @@ This is an example of an LLM based Q&A chatbot that can refer to external docume
 
 The program can answer your questions by referring the OpenVINO technical documentation from the OpenVINO official web site.
 
+This program downloads all the data, including reference documents and DL models, and **can perform inference offline**. You don't need any network connection or cloud services once you prepare the data locally. 
+
 ## Programs / Files
 
 |#|Program/File|Description|
