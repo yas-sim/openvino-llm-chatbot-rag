@@ -17,7 +17,7 @@ nncf.set_log_level(logging.ERROR)
 load_dotenv(verbose=True)
 cache_dir = os.environ['CACHE_DIR']
 
-def prepare_model(model_vendor, model_id, group_size:int, ratio:float, generate_fp16:bool=True, generate_int8:bool=True, generate_int4:bool=True, cache_dir='./cache'):
+def prepare_model(model_vendor, model_id, group_size:int, ratio:float, int4_mode:str='SYM', generate_fp16:bool=True, generate_int8:bool=True, generate_int4:bool=True, cache_dir='./cache'):
     pt_model_id = f'{model_vendor}/{model_id}'
     fp16_model_dir = Path(model_id) / "FP16"
     int8_model_dir = Path(model_id) / "INT8"
@@ -52,12 +52,13 @@ def prepare_model(model_vendor, model_id, group_size:int, ratio:float, generate_
 
     # INT4
     if generate_int4 and not os.path.exists(int4_model_dir / ov_model_file_name):
-        print('\n** Generating an INT4_ASYM IR model')
+        print(f'\n** Generating an INT4_{int4_mode} IR model')
         ov_model = OVModelForCausalLM.from_pretrained(fp16_model_dir, compile=False, cache_dir=cache_dir, ov_config={'CACHE_DIR':cache_dir})
         int4_model_dir.mkdir(parents=True, exist_ok=True)
         ov_model = ov.Core().read_model(fp16_model_dir / ov_model_file_name)
         shutil.copy(fp16_model_dir / 'config.json', int4_model_dir / 'config.json')
-        compressed_model = nncf.compress_weights(ov_model, mode=nncf.CompressWeightsMode.INT4_ASYM, ratio=ratio, group_size=group_size)
+        comp_mode = nncf.CompressWeightsMode.INT4_ASYM if int4_mode=='ASYM' else nncf.CompressWeightsMode.INT4_SYM
+        compressed_model = nncf.compress_weights(ov_model, mode=comp_mode, ratio=ratio, group_size=group_size)
         ov.save_model(compressed_model, int4_model_dir / ov_model_file_name)
         del ov_model
         del compressed_model
@@ -69,8 +70,14 @@ def prepare_model(model_vendor, model_id, group_size:int, ratio:float, generate_
 
 print('*** LLM model downloader')
 
-prepare_model('databricks', 'dolly-v2-3b', 128, 0.8)
+# Databricks/dolly-v2-3b
+prepare_model('databricks', 'dolly-v2-3b', group_size=128, ratio=0.8)
 
+# Intel/neural-chat-7b
+prepare_model('Intel', 'neural-chat-7b-v3-1', group_size=64, ratio=0.6)
+
+#"""
+# meta/Llama2-7b-chat
 try:
     whoami()
     print('Authorization token already provided')
@@ -79,4 +86,5 @@ except OSError:
     print('You need to login to HuggingFace hub to download the model.')
     login()
 finally:
-    prepare_model('meta-llama', 'Llama-2-7b-chat-hf', 128, 0.8)
+    prepare_model('meta-llama', 'Llama-2-7b-chat-hf', group_size=128, ratio=0.8)
+#"""
