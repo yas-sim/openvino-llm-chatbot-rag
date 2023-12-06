@@ -11,7 +11,7 @@ This program doesn't rely on any cloud services or webAPIs for inferencing. The 
 |#|Program/File|Description|
 |---|---|---|
 |1|`llm-model-downloader.py`|Download databrics/dolly-2 and meta-llama/llama2-7b-chat models, and convert them into OpenVINO IR models.|
-|2|`openvino-doc-specific-extractor.py`|Convert OpenVINO HTML documents into vector store (DB).<br>Reads HTML documents, extracts text, generates embeddings, and store it into vector store.|
+|2|`openvino-doc-specific-extractor.py`|Convert OpenVINO HTML documents into vector store (DB).<br>Reads HTML documents, extracts text, generates embeddings, and store it into vector store.<br>You need to download an archived (zipped) HTML document from OpenVINO document web site.|
 |3|`openvino-rag-server.py`|OpenVINO Q&A demo server|
 |4|`openvino-rag-client.py`|OpenVION Q&A demo client|
 |5|`.env`|Configurations (no secrets nor credentials ncluded. just a configuration file)|
@@ -46,11 +46,15 @@ python -m spacy download en_core_web_sm
 python openvino-doc-specific-extractor.py
 ```
 - `.vectorstore_300_0` directory will be created.
+	- '_300_0' means the chunk size is 300 and chunk overlap is 0.
+	- You can generate the vector store with different chunk configurations by modifying the last few lines of Python code.
+	- You can modify the `.env` file to specify which vector store file to use in the client and server programs. 
 
 3. Download LLM models and convert them into OpenVINO IR models
-- `llm-model-downloader.py` will download 'dolly2-3b' and 'llama2-7b-chat' models.
+- `llm-model-downloader.py` will download 'dolly2-3b', 'llama2-7b-chat', and 'Intel/neural-chat-7b-v3-1' models as default.
+	- You can specify the LLM model to use by modifying `.env` file.
 - You need to have account and access token to download the 'llama2-7b-chat' model. Go to HuggingFace web site and register yourself to get the access token. Also, you need to request the access to the llama2 models at llama2 project page.
-- The downloader will generate FP16, INT8 and INT4_ASYM models. You can use one of them.
+- The downloader will generate FP16, INT8 and INT4 models by default. You can use one of them. Please modify `.env` file to specify which model of data type to use.
 ```sh
 python llm-model-downloader.py
 ```
@@ -66,6 +70,7 @@ uvicorn openvino-rag-server:app --host 0.0.0.0
 ```sh
 streamlit run openvino-rag-client.py
 ``` 
+Note: You can start the server and client in arbitrary order.
 
 ## Examples
 ![pic1](./resources/screenshot1.png)
