@@ -42,7 +42,7 @@ embeddings = HuggingFaceEmbeddings(
     encode_kwargs = {'normalize_embeddings':True}
 )
 
-vectorstore_dir = f'{vectorstore_dir}_300_0'
+vectorstore_dir = f'{vectorstore_dir}_{vector_db_postfix}'
 vectorstore = Chroma(persist_directory=vectorstore_dir, embedding_function=embeddings)
 retriever = vectorstore.as_retriever()
 #    search_type='similarity_score_threshold', 
